@@ -18,3 +18,14 @@ jobs:
         run: su vscode -c "bash tests/book-claims.sh"
       - name: Interactive keys (history, nano, less)
         run: su vscode -c "python3 -u tests/interactive-smoke.py"
+
+  # Build the dev container exactly as Codespaces does (Dockerfile, features,
+  # postCreateCommand with its self-test), then run the book tests inside it.
+  devcontainer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the dev container
+        run: npx -y @devcontainers/cli@0.80.0 up --workspace-folder .
+      - name: Lab book commands inside the dev container
+        run: npx -y @devcontainers/cli@0.80.0 exec --workspace-folder . bash tests/book-claims.sh
