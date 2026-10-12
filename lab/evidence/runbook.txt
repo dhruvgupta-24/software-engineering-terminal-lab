@@ -1,0 +1,264 @@
+COURSEDESK OPERATIONS RUNBOOK
+Larkspur College, Platform Engineering
+Maintained by: Platform day team
+Last reviewed: 2026-09-01
+
+This runbook is for engineers who operate coursedesk, the course
+registration portal. Read the section you need, not the whole file.
+Several sections have been replaced over time. Retired sections are
+kept for audit history and are marked RETIRED or ARCHIVED in their
+heading. Always follow the section marked CURRENT.
+
+CONTENTS
+  Section 1   Service overview
+  Section 2   Servers and ports
+  Section 3   Log format
+  Section 4   Alert reference
+  Section 5   Configuration files
+  Section 6   Escalation rota (2025, ARCHIVED)
+  Section 7   Deploy procedure
+  Section 8   Rollback procedure
+  Section 9   Handover note format (rev 3, RETIRED)
+  Section 10  Database connection pool
+  Section 11  Retries and gateway timeouts
+  Section 12  Student communications
+  Section 13  Disk space
+  Section 14  Handover note format (rev 4, CURRENT)
+  Section 15  Escalation rota (from 2026-09-01, CURRENT)
+  Section 16  Glossary
+
+
+SECTION 1: SERVICE OVERVIEW
+
+coursedesk lets students search courses, view their timetable and
+enrol in classes. It is busiest in the first two weeks of each term
+and during the overnight late-registration window, which runs from
+01:00 to 03:30 for students studying from other time zones.
+
+Requests reach a load balancer, which forwards each request to one of
+three application servers. Each application server keeps a pool of
+connections to the primary database. If a server cannot get a
+database connection within db.timeout_ms, it returns status 503.
+
+Students notice failures on /api/enrol first, because enrolment
+needs a database write. Course search (/api/courses) is cached and
+often keeps working during a database problem.
+
+
+SECTION 2: SERVERS AND PORTS
+
+  web-01    application server, rack A
+  web-02    application server, rack B
+  web-03    application server, rack C
+  db-primary.coursedesk.internal   PostgreSQL primary, port 5432
+
+Each application server listens on port 8080. The load balancer
+checks /health on every server every 60 seconds. A server that
+fails three health checks in a row is removed from rotation until it
+passes again. A server that returns 503 on other endpoints can still
+pass /health, because /health does not use the database.
+
+
+SECTION 3: LOG FORMAT
+
+Each application server writes one line per request. The night
+export in requests.log combines all three servers in time order.
+Fields are separated by a vertical bar (|). There is no header line.
+
+  Field 1   time of the request, HH:MM:SS
+  Field 2   server that handled it (web-01, web-02 or web-03)
+  Field 3   HTTP status code
+  Field 4   response time in milliseconds
+  Field 5   endpoint (path) that was requested
+  Field 6   student ID, or - when no student was signed in
+
+Example line:
+
+  01:02:27|web-02|200|29|/health|-
+
+Status codes you will see in this service:
+
+  200   OK
+  304   not modified (cached course list)
+  404   not found
+  503   service unavailable (no database connection available)
+  504   gateway timeout (the load balancer stopped waiting)
+
+When you search for a status code, include the bars around it, for
+example "|503|". A bare 503 could also match part of a response time
+or a student ID in another export.
+
+
+SECTION 4: ALERT REFERENCE
+
+Alerts are sent to the on-call pager. The pager repeats an alert
+every minute while its condition is still true, so the same alert
+often appears several times in a row in alerts.log. Fields in
+alerts.log are: time | alert name | server.
+
+  HighErrorRate     more than 5% of requests on a server returned 5xx
+  DBPoolExhausted   every database connection on a server is in use
+  HighLatency       median response time above 800 ms for 5 minutes
+  DiskSpaceLow      less than 10% free space on the log volume
+
+DBPoolExhausted on a single server usually means that server's pool
+is too small or its connections are not being released. Check that
+server's configuration before restarting anything.
+
+
+SECTION 5: CONFIGURATION FILES
+
+Each server reads its settings from a plain-text file of the form
+setting = value. Two versions matter during an incident:
+
+  web-NN-live.conf       the file the server is using now
+  web-NN-approved.conf   the last version approved through change review
+
+Only approved files may be deployed. If a live file differs from its
+approved file, the live file must be reconciled: change it until a
+comparison with the approved file reports no differences. Do not edit
+the approved file. Record any setting that was changed in the
+handover note.
+
+
+SECTION 6: ESCALATION ROTA (2025, ARCHIVED)
+
+This rota ended on 2025-12-19. Do not use these names.
+
+  Incident lead          Ravi Menon
+  Database on-call       Ines Duarte
+  Network on-call        Colm Byrne
+
+
+SECTION 7: DEPLOY PROCEDURE
+
+1. Open a change request and attach the new configuration.
+2. Wait for one reviewer from the Platform day team to approve it.
+3. Copy the approved configuration to the server.
+4. Watch the HighErrorRate and HighLatency dashboards for ten
+   minutes.
+5. Record the deploy ID (D-nnn) in the change request.
+
+Night deploys need the incident lead's approval. A deploy that
+skipped review must be reconciled with the approved configuration
+the next morning, even if no incident followed.
+
+
+SECTION 8: ROLLBACK PROCEDURE
+
+1. Identify the server whose configuration changed.
+2. Compare its live configuration with its approved configuration.
+3. Change the live configuration to match the approved one.
+4. Compare again. Continue only when no differences are reported.
+5. Restart the application on that server.
+6. Confirm that /health returns 200 and that new 503 responses stop.
+
+Never roll back by copying a configuration from a different server.
+Each server has its own name and log settings.
+
+
+SECTION 9: HANDOVER NOTE FORMAT (REV 3, RETIRED)
+
+Retired on 2026-09-01. Kept so older notes can still be read.
+
+  Incident: <incident id>
+  Owner: <name of the engineer writing the note>
+  Escalation: <incident lead>
+  Errors: <approximate number of errors>
+  Server: <affected server>
+  Notes: <anything else>
+
+
+SECTION 10: DATABASE CONNECTION POOL
+
+db.pool_size sets how many database connections one application
+server may hold. The approved value for every application server is
+40. With fewer connections, requests queue for a connection. When a
+request waits longer than db.timeout_ms, the server returns 503.
+
+Symptoms of a pool that is too small:
+
+  - DBPoolExhausted alerts for one server
+  - 503 responses mostly from that server
+  - slower responses on that server even when requests succeed
+
+The other servers stay healthy unless the load balancer moves extra
+traffic to them.
+
+
+SECTION 11: RETRIES AND GATEWAY TIMEOUTS
+
+The load balancer waits up to 10000 ms for a response. If it gets no
+response in that time it returns 504 to the browser and retries the
+request once on another server. A 504 on /api/enrol therefore does
+not mean the enrolment failed: the retry usually completes it.
+
+A 503 is different. The application server answered, but it refused
+the request, and the browser shows the student an error page. The
+enrolment was not saved.
+
+
+SECTION 12: STUDENT COMMUNICATIONS
+
+After any incident during a registration window, Student Services
+contacts every student whose enrolment failed. Give them a file
+named students-to-contact.txt with:
+
+  - one student ID per line
+  - only students with at least one 503 response on /api/enrol
+  - each student listed once, even if they retried several times
+  - IDs in sorted order
+
+Do not include students whose only errors were on other endpoints,
+and do not include students who only received 504 (see Section 11).
+
+
+SECTION 13: DISK SPACE
+
+The log volume on each server is 20 GB. DiskSpaceLow fires below
+10% free. A single DiskSpaceLow alert during the night is normal
+while the nightly log rotation runs between 01:30 and 01:45. Act only
+if the alert repeats after 02:00.
+
+
+SECTION 14: HANDOVER NOTE FORMAT (REV 4, CURRENT)
+
+Use this format from 2026-09-01. Write exactly these lines, in this
+order, with one space after each colon. Replace the text in angle
+brackets, including the brackets.
+
+  Incident: <incident id>
+  Service: coursedesk
+  Escalation: <current incident lead>
+  Faulty server: <server with the most 503 responses>
+  First 503: <time of the earliest 503 response, HH:MM:SS>
+  503 responses: <total number of 503 responses in requests.log>
+  Slowest request: <response time> ms on <endpoint>
+  Cause: <setting> changed from <approved value> to <live value>
+  Config: reconciled
+  Students to contact: <number of IDs in students-to-contact.txt>
+
+Write "Config: reconciled" only after a comparison of the live and
+approved configuration files reports no differences.
+
+
+SECTION 15: ESCALATION ROTA (FROM 2026-09-01, CURRENT)
+
+  Incident lead          Tomas Reyes
+  Database on-call       Mira Castellanos
+  Network on-call        Jun Park
+
+Name the incident lead in every handover note. The incident lead
+decides whether the database or network on-call is needed.
+
+
+SECTION 16: GLOSSARY
+
+  approved file    configuration accepted through change review
+  handover note    short summary that lets the next shift continue
+  live file        configuration a server is using now
+  pool             set of reusable database connections
+  reconcile        make a live file match its approved file
+  retry            the load balancer sending a request again
+
+END OF RUNBOOK

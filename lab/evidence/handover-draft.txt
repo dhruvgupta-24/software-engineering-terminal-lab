@@ -1,0 +1,6 @@
+Incident: INC-2417
+Owner: Sam Okafor
+Escalation: Ravi Menon
+Errors: about 20
+Server: web-03
+Notes: errors started around 01:40, cause unknown, config not checked
