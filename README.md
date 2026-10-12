@@ -24,7 +24,8 @@ coursedesk, the course registration portal of a fictional college, returned erro
 | `lab/dev/` | Data generator and evidence hash updater, for maintainers |
 | `reviewer/` | Reviewer notes and the reference solution script |
 | `tests/` | Setup and checker tests; book command and output tests; interactive key tests |
-| `.github/workflows/test.yml` | Runs all three test suites in the Codespace image on every push |
+| `.devcontainer/` | Codespace definition: image, settings, SSH server, setup command |
+| `.github/workflows/test.yml` | On every push: runs all three test suites, and builds the dev container as Codespaces does |
 
 ## Prerequisites
 

@@ -57,6 +57,10 @@ Other results: 503s by server 31 / 4 / 2 (web-02, web-03, web-01); statuses 200:
 | `postcreate.sh` twice (also runs the self-test) | Settings added once; self-test passes |
 | Book followed end to end by a separate AI agent given only the book (no solution files) | 14/14; its 15 findings were fixed |
 
+**Fresh GitHub Codespace** (2-core, created from `main` on 2026-10-12, tested over `gh codespace ssh`): the container built from `.devcontainer/` (Debian 12, user `vscode`); setup printed `Lab self-test: 34 passed, 0 failed.` and `Setup complete`; all three suites passed (34, 36 and 15 checks); `start.sh` created `attempt-01` (checker 1/14 fresh, 14/14 after the reference solution); a second run created `attempt-02` and left `attempt-01` byte-identical; evidence was read-only; a second setup run added no duplicate settings; `git status` stayed clean. Not testable over SSH: whether the browser passes Ctrl+R, Ctrl+G and Ctrl+O to the terminal, which needs a person at the keyboard.
+
+**GitHub Actions** ([runs](https://github.com/dhruvgupta-24/software-engineering-terminal-lab/actions)): every push runs the three suites in the Codespace image and builds the dev container with the official devcontainer CLI, including the setup self-test. All runs passed.
+
 
 ## Three improvements over the reference lab
 
