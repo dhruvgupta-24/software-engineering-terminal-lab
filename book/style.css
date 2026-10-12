@@ -14,7 +14,7 @@
 }
 
 body {
-  font: 10pt/1.5 "Segoe UI", Helvetica, Arial, sans-serif;
+  font: 10pt/1.45 "Segoe UI", Helvetica, Arial, sans-serif;
   color: #1a1a1a;
   margin: 0;
 }
@@ -45,7 +45,7 @@ body {
 h2 {
   font-size: 13pt;
   color: #102a43;
-  margin: 22px 0 8px;
+  margin: 18px 0 7px;
   padding: 4px 0 4px 9px;
   border-left: 4px solid #1f4e79;
   background: #eef3f8;

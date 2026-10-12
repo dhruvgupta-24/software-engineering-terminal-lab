@@ -61,6 +61,8 @@ def main():
         page.write_text(html, encoding="utf-8")
         subprocess.run([
             find_browser(), "--headless", "--disable-gpu", "--no-pdf-header-footer",
+            # Bookmarks for each heading, so readers can jump to an experiment.
+            "--generate-pdf-document-outline",
             f"--print-to-pdf={OUTPUT}", page.as_uri(),
         ], check=True, capture_output=True)
     print(f"Wrote {OUTPUT}")

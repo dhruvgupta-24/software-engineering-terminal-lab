@@ -56,7 +56,7 @@ The folder you are now in is your **lab root**; every experiment starts there. F
 **How to work.** Use one terminal for the whole lab, so `history` holds all your commands. Type each command yourself and read its output before moving on. Write each prediction **before** running the command. Click inside the terminal before a Ctrl shortcut (on a Mac, use Control, not Command).
 
 <div class="note" markdown="1">
-**If you get stuck.** A `:` or `(END)` at the bottom of the screen means you are inside `less`: press `q`. A bar of `^G Help ^O Write Out ...` at the bottom means you are inside `nano`: press `Ctrl+X`. A command that never finishes can be stopped with `Ctrl+C`. To see where you are, run `pwd`; to return to your lab root, `cd` to the path you wrote above.
+**If you get stuck.** A `:` or `(END)` at the bottom of the screen means you are inside `less`: press `q`. A bar of `^G Help ^O Write Out ...` at the bottom means you are inside `nano`: press `Ctrl+X`. A command that never finishes can be stopped with `Ctrl+C`. To see where you are, run `pwd`; to return to your lab root, `cd` to the path you wrote above. Stuck on an experiment? `python3 ../../lab/hint.py 3` gives a hint for Experiment 3 without the answer; add `2` for a stronger one.
 </div>
 
 ## Experiment 1 · Read the runbook with `less`
@@ -384,6 +384,14 @@ This task gives requirements, not commands. Several short commands with intermed
 
 Students to contact: ______ 503 responses: ______ Faulty server: ______ Cause: ____________________
 
+## Going further (optional)
+
+For anyone who finishes early. These are not checked; use only the tools from this lab.
+
+1. Which endpoint returned the most 503 responses, and how many? ______________
+2. Which students received a 503 on `/api/enrol` three times? ______________________
+3. Run `diff evidence/handover-draft.txt work/handover.txt`. In one sentence, say what the output tells the next engineer about your corrections. ______________________________
+
 ## Validation (10 minutes)
 
 From your lab root:
@@ -434,6 +442,8 @@ Checker score: ______ / 14
 | `(failed reverse-i-search)` | No earlier command contains that text | `Ctrl+G`, then `history | grep -F` |
 | `[ File '...' is unwritable ]` | nano opened an original in `evidence/` | `Ctrl+X` (answer `N`), open the `work/` copy |
 | `Run this checker from inside your lab attempt` | The checker was run outside your lab root | `cd` to your lab root first |
+
+**Starting one working copy again.** Overwrite it from its original: `cat evidence/web-02-live.conf > work/web-02.conf`, or `cat evidence/handover-draft.txt > work/handover.txt`. This works whether or not the working copy still exists. If you deleted the working copy, `cp` would create a read-only copy that nano cannot save.
 
 ## Command reference
 

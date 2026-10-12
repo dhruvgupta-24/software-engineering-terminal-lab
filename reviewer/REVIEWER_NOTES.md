@@ -43,7 +43,7 @@ Config: reconciled
 Students to contact: 9
 ```
 
-Other results: 503s by server 31 / 4 / 2 (web-02, web-03, web-01); statuses 200: 108, 304: 11, 404: 4, 503: 37, 504: 5; config diff `7c7`, `9d8`, `10a10`; `web-02.conf` identical to the approved file; 9 students (S24026, S24206, S24299, S24446, S24505, S24514, S24738, S24931, S24940). Traps: S24916 (503 only on `/api/timetable`) and S24656 (only 504s, retried) are excluded.
+Other results: 503s by server 31 / 4 / 2 (web-02, web-03, web-01); statuses 200: 108, 304: 11, 404: 4, 503: 37, 504: 5; config diff `7c7`, `9d8`, `10a10`; `web-02.conf` identical to the approved file; 9 students (S24026, S24206, S24299, S24446, S24505, S24514, S24738, S24931, S24940). Traps: S24916 (503 only on `/api/timetable`) and S24656 (only 504s, retried) are excluded. Optional "Going further" answers: `/api/enrol` had the most 503s (18); S24299, S24505 and S24931 each received three.
 
 ## Validation and test evidence
 
@@ -51,9 +51,9 @@ Other results: 503s by server 31 / 4 / 2 (web-02, web-03, web-01); statuses 200:
 
 | Test (Codespace image, non-root user, Docker) | Result |
 |---|---|
-| `bash tests/run-tests.sh`: setup, attempts, read-only evidence, checker read-only, solution 14/14, 23 deliberate mistakes | 34 passed |
+| `bash tests/run-tests.sh`: setup, attempts, read-only evidence, checker read-only, solution 14/14, hints, 23 deliberate mistakes | 37 passed |
 | `python3 tests/interactive-smoke.py`: the book's keys in bash, nano and less, waiting for real screen output; also at a quarter CPU | 15 passed |
-| `bash tests/book-claims.sh`: every command in the book run in order; every quoted output, message and count checked | 36 passed |
+| `bash tests/book-claims.sh`: every command in the book run in order; every quoted output, message and count checked | 43 passed |
 | `postcreate.sh` twice (also runs the self-test) | Settings added once; self-test passes |
 | Book followed end to end by a separate AI agent given only the book (no solution files) | 14/14; its 15 findings were fixed |
 
@@ -65,16 +65,18 @@ Other results: 503s by server 31 / 4 / 2 (web-02, web-03, web-01); statuses 200:
 ## Three improvements over the reference lab
 
 1. **One connected investigation.** The reference practises on unrelated files (names, scores, a timetable) and repeats similar tasks in a challenge. Here every experiment answers one question about the incident and fills one line of the handover note, so the final task depends on earlier results.
-2. **Mistakes demonstrated and diagnosed.** Learners run the failing versions (unquoted delimiter, `sort f > f`, `uniq -c` without `sort`, swapped `diff` inputs); each experiment has a "Watch for" box; the checker names the mistake and fix. The reference checker prints only `CHECK <file>`.
+2. **Mistakes demonstrated and diagnosed.** Learners run the failing versions (unquoted delimiter, `sort f > f`, `uniq -c` without `sort`, swapped `diff` inputs); each experiment has a "Watch for" box; the checker names the mistake and fix and points to a two-level hint (`lab/hint.py`) that never gives the answer. The reference checker prints only `CHECK <file>`.
 3. **History used for real work, with the keys configured.** The learner recalls and extends their own Experiment 3 pipeline to find the faulty server, rather than searching two commands typed only to make a trail. The Codespace sends Ctrl+R, Ctrl+G, Ctrl+O and Ctrl+K to the shell and saves history after every command; the reference configures neither.
 
 ## Time, assumptions and blockers
 
-- Expected learner time: 
-- Actual time spent: 
+- Expected learner time: about 100 minutes (90 to 110), as planned in the lab book: setup 5, Experiments 1 to 7 at 10 to 12 each, final task 15, validation 10. The author, who already knew the answers and the tools, completed the lab in 34 minutes; a beginner reading each explanation, writing predictions and recovering from mistakes needs roughly three times as long. Not yet timed with a student.
+- Actual time spent: 34 minutes to complete the lab end to end (started 11:30 PM, finished 12:04 AM the following day).
 - Assumptions: Lab 1 commands are known; Bash in the Codespace image as the non-root `vscode` user; `LC_COLLATE=C` (the data also sorts the same under `en_US.UTF-8`); one shared dataset; solution and checker visible, as in the reference.
-- Blockers: 
+- Blockers: Nothing stopped the lab. During development, the Codespace build failed once because the base image ships a Yarn package source with an expired signing key, so `apt-get update` failed and GitHub fell back to a recovery container. `.devcontainer/Dockerfile` now removes that source, and CI builds the dev container on every push. During my own run, my first reverse search in Experiment 6 ran the recalled `sort | uniq -c` command again instead of placing it on the prompt for editing, and left a stray `uniq -c`; I also ran the Experiment 3 `grep -F "|503"` command on its own before adding the per-server pipeline. I recalled the command again, completed the pipeline, and the attempt finished with 14 of 14 checks passing.
 
 ## AI use
 
+I took assistance from Claude Code throughout the assignment for implementation, drafting, debugging and review. I chose the scenario, defined the requirements and writing standards, guided the implementation, reviewed each result against the assignment brief and the reference lab, and requested changes until the outcome met them.
 
+I then completed the lab myself as a student in my own Codespace, running the commands, troubleshooting my mistakes (see Blockers) and finishing with 14 of 14 checks passing.

@@ -82,7 +82,28 @@ else
     fail "single-part mode"
 fi
 
-# 7. Each common mistake is detected with a specific message.
+# 7. Hints: every experiment has two levels, bad input is refused, and no hint
+#    gives away a value the student must find.
+hint_ok=yes
+for part in 1 2 3 4 5 6 7 final; do
+    for level in 1 2; do
+        text="$("$PYTHON" "$tmp/lab/hint.py" "$part" "$level" 2>&1)" || hint_ok=no
+        for answer in "Tomas Reyes" "01:14:07" "10093" "37" "31" "S24" "pool_size" "40 to 4"; do
+            grep -qF "$answer" <<< "$text" && { hint_ok=no; echo "  hint $part $level reveals $answer"; }
+        done
+    done
+done
+[ "$hint_ok" = yes ] && ok "hints exist for every part and reveal no answers" \
+    || fail "hints exist for every part and reveal no answers"
+"$PYTHON" "$tmp/lab/hint.py" 9 > /dev/null 2>&1; s1=$?
+"$PYTHON" "$tmp/lab/hint.py" 3 5 > /dev/null 2>&1; s2=$?
+[ "$s1" -eq 2 ] && [ "$s2" -eq 2 ] && ok "hint refuses an unknown part or level" \
+    || fail "hint refuses an unknown part or level"
+check "$tmp/attempts/attempt-02"
+grep -qF "python3 ../../lab/hint.py 2" <<< "$out" && ok "checker points to the hint for the first failing part" \
+    || fail "checker points to the hint for the first failing part"
+
+# 8. Each common mistake is detected with a specific message.
 #    mutate NAME PART EXPECTED_TEXT COMMANDS
 mutate() {
     local name="$1" part="$2" expected="$3" commands="$4"

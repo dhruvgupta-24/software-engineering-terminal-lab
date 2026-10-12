@@ -18,7 +18,7 @@ pass=0; fail=0
 ok()  { if eval "$2"; then pass=$((pass+1)); echo "ok    $1"; else fail=$((fail+1)); echo "FAIL  $1"; fi; }
 
 setup_out="$(bash lab/setup/postcreate.sh 2>&1)"
-ok "setup prints self-test and 'Setup complete'" '[[ "$setup_out" == *"Lab self-test: 34 passed, 0 failed."* && "$setup_out" == *"Setup complete"* ]]'
+ok "setup prints self-test and 'Setup complete'" '[[ "$setup_out" =~ "Lab self-test: "[0-9]+" passed, 0 failed." && "$setup_out" == *"Setup complete"* ]]'
 start1="$(bash lab/start.sh)"
 ok "start.sh last line is the cd command (attempt-01)" '[[ "$(tail -n 1 <<< "$start1")" == "  cd $R/attempts/attempt-01" ]]'
 start2="$(bash lab/start.sh)"
@@ -80,6 +80,24 @@ ok "validation: deliberate mistake FAIL text" '[[ "$fail_msg" == *"still has rep
 cut -d "|" -f 2,3 evidence/alerts.log | sort | uniq > work/alert-types.txt
 out="$(cd .. && python3 ../lab/check.py 2>&1)"
 ok "checker outside attempt: message as in error table" '[[ "$out" == "Run this checker from inside your lab attempt"* ]]'
+
+ok "hint commands from the book work" 'python3 ../../lab/hint.py 3 >/dev/null && python3 ../../lab/hint.py 3 2 >/dev/null'
+# Restore tip, working copy still exists: cat > and cp both leave it writable.
+echo damaged >> work/web-02.conf
+cat evidence/web-02-live.conf > work/web-02.conf
+ok "restore tip: cat > onto an existing copy is writable and identical" '[[ -w work/web-02.conf ]] && diff -q evidence/web-02-live.conf work/web-02.conf >/dev/null'
+cp evidence/web-02-live.conf work/web-02.conf
+ok "restore tip: cp onto an existing copy keeps it writable" '[[ -w work/web-02.conf ]]'
+# Restore tip, working copy deleted: cat > is writable, cp is read-only.
+rm -f work/web-02.conf
+cat evidence/web-02-live.conf > work/web-02.conf
+ok "restore tip: cat > after deleting the copy is writable and identical" '[[ -w work/web-02.conf ]] && diff -q evidence/web-02-live.conf work/web-02.conf >/dev/null'
+rm -f work/cp-copy.conf
+cp evidence/web-02-live.conf work/cp-copy.conf
+ok "restore tip: cp to a deleted (new) file creates a read-only copy" '[[ ! -w work/cp-copy.conf ]]'
+chmod u+w work/cp-copy.conf; rm -f work/cp-copy.conf
+ok "going further 1: /api/enrol has the most 503s (18)" '[[ "$(grep -F "|503|" evidence/requests.log | cut -d "|" -f 5 | sort | uniq -c | sort -n -r | head -1 | tr -s " ")" == " 18 /api/enrol" ]]'
+ok "going further 2: three students got three enrol 503s" '[[ "$(grep -F "|503|" evidence/requests.log | grep -F "|/api/enrol|" | cut -d "|" -f 6 | sort | uniq -c | grep -c "^ *3 ")" -eq 3 ]]'
 
 bash "$R/reviewer/solution.sh" . >/dev/null
 final="$(python3 ../../lab/check.py)"

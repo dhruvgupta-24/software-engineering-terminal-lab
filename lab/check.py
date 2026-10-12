@@ -492,6 +492,11 @@ def main(argv):
     print(f"{passed} of {total} checks passed.")
     if passed < total:
         print("Fix one FAIL at a time, then run the checker again.")
+        first = next((part for part, ok, _ in checker.results
+                      if not ok and part != "evidence"), None)
+        if first:
+            name = "the final task" if first == "final" else f"Experiment {first}"
+            print(f"Stuck on {name}? For a hint: python3 ../../lab/hint.py {first}")
     if wanted == PARTS:
         print()
         print("Not checked here: searching history with Ctrl+R, saving in nano and")
