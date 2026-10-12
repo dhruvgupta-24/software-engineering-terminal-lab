@@ -7,8 +7,15 @@
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
         "terminal.integrated.sendKeybindingsToShell": true,
-        "workbench.startupEditor": "none"
-      }
+        "workbench.startupEditor": "none",
+        "chat.disableAIFeatures": true,
+        "github.copilot.enable": { "*": false },
+        "editor.inlineSuggest.enabled": false
+      },
+      "extensions": [
+        "-GitHub.copilot",
+        "-GitHub.copilot-chat"
+      ]
     }
   }
 }

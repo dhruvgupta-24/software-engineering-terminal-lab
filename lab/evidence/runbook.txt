@@ -26,6 +26,7 @@ CONTENTS
   Section 14  Handover note format (rev 4, CURRENT)
   Section 15  Escalation rota (from 2026-09-01, CURRENT)
   Section 16  Glossary
+  Section 17  Revision history
 
 
 SECTION 1: SERVICE OVERVIEW
@@ -82,7 +83,7 @@ Status codes you will see in this service:
   304   not modified (cached course list)
   404   not found
   503   service unavailable (no database connection available)
-  504   gateway timeout (the load balancer stopped waiting)
+  504   gateway timeout (the load balancer stopped waiting and retried)
 
 When you search for a status code, include the bars around it, for
 example "|503|". A bare 503 could also match part of a response time
@@ -188,10 +189,13 @@ traffic to them.
 
 SECTION 11: RETRIES AND GATEWAY TIMEOUTS
 
-The load balancer waits up to 10000 ms for a response. If it gets no
-response in that time it returns 504 to the browser and retries the
-request once on another server. A 504 on /api/enrol therefore does
-not mean the enrolment failed: the retry usually completes it.
+The load balancer waits up to 10000 ms for a response. If it gets
+none, the request is logged with status 504 and the load balancer
+retries it once on another server. The student sees an error only if
+the retry also fails. In requests.log a retry appears about 10
+seconds after the 504, on a different server, with the same endpoint
+and student ID. A 504 on /api/enrol therefore does not mean the
+enrolment failed.
 
 A 503 is different. The application server answered, but it refused
 the request, and the browser shows the student an error page. The
@@ -233,7 +237,7 @@ brackets, including the brackets.
   Faulty server: <server with the most 503 responses>
   First 503: <time of the earliest 503 response, HH:MM:SS>
   503 responses: <total number of 503 responses in requests.log>
-  Slowest request: <response time> ms on <endpoint>
+  Slowest request: <highest response time, any status> ms on <endpoint>
   Cause: <setting> changed from <approved value> to <live value>
   Config: reconciled
   Students to contact: <number of IDs in students-to-contact.txt>
@@ -260,5 +264,22 @@ SECTION 16: GLOSSARY
   pool             set of reusable database connections
   reconcile        make a live file match its approved file
   retry            the load balancer sending a request again
+
+
+SECTION 17: REVISION HISTORY
+
+  2024-08-26   First version, sections 1 to 8.
+  2024-09-02   Added section 9 (handover note format, rev 3).
+  2024-11-14   Added section 10 after the pool exhaustion on web-03.
+  2025-01-08   Escalation rota for 2025 (section 6).
+  2025-02-20   Section 11 rewritten: the load balancer now retries
+               once on another server after a 504.
+  2025-06-03   Section 12 added at the request of Student Services.
+  2025-08-29   Section 13: DiskSpaceLow during log rotation is normal.
+  2025-12-19   Section 6 archived over the winter break.
+  2026-09-01   Section 14 (rev 4) replaces section 9. Section 15
+               adds the current rota. Glossary updated.
+
+Report mistakes in this runbook to the Platform day team.
 
 END OF RUNBOOK

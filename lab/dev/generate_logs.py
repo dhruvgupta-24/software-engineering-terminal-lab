@@ -103,6 +103,9 @@ for when, ms, endpoint, student in [
         ("01:59:40", 10047, "/login", rng.choice(OTHERS)),
         ("02:11:26", 10020, "/api/enrol", TIMEOUT_ONLY)]:
     add(secs(when), "web-02", 504, ms, endpoint, student)
+    # The load balancer retries once on another server, about 10 s later.
+    add(secs(when) + 10, rng.choice(["web-01", "web-03"]), 200, latency(80, 700),
+        endpoint, student)
 
 rows.sort(key=lambda r: r[0])
 lines = [f"{hms(r[0])}|{r[1]}|{r[2]}|{r[3]}|{r[4]}|{r[5]}" for r in rows]
@@ -114,10 +117,10 @@ alerts = """01:14:30|HighErrorRate|web-02
 01:16:30|HighErrorRate|web-02
 01:17:10|DBPoolExhausted|web-02
 01:18:10|DBPoolExhausted|web-02
-01:21:40|HighLatency|web-01
+01:21:40|HighLatency|web-02
 01:24:30|HighErrorRate|web-02
 01:25:30|HighErrorRate|web-02
-01:31:05|HighLatency|web-01
+01:31:05|HighLatency|web-02
 01:33:10|DBPoolExhausted|web-02
 01:40:00|DiskSpaceLow|web-03
 01:52:30|HighErrorRate|web-03

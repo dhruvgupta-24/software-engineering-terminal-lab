@@ -469,9 +469,9 @@ def main(argv):
         return 2
     attempt = find_attempt()
     if attempt is None:
-        print("Run this checker from inside your lab attempt, for example:")
-        print("  cd attempts/attempt-01")
-        print("  python3 ../../lab/check.py")
+        print("Run this checker from inside your lab attempt: run the cd command")
+        print("printed by bash lab/start.sh (for example cd attempts/attempt-01),")
+        print("then: python3 ../../lab/check.py")
         return 2
 
     checker = Checker(attempt)
@@ -492,9 +492,10 @@ def main(argv):
     print(f"{passed} of {total} checks passed.")
     if passed < total:
         print("Fix one FAIL at a time, then run the checker again.")
-    print()
-    print("Not checked here: searching history with Ctrl+R, saving in nano and")
-    print("moving or searching in less. Show these to your instructor.")
+    if wanted == PARTS:
+        print()
+        print("Not checked here: searching history with Ctrl+R, saving in nano and")
+        print("moving or searching in less. Show these to your instructor.")
     return 0 if passed == total else 1
 
 

@@ -1,0 +1,20 @@
+name: Test lab
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # Same image as .devcontainer/devcontainer.json.
+    container: mcr.microsoft.com/devcontainers/python:1-3.12-bookworm
+    steps:
+      - uses: actions/checkout@v4
+      # Run as the Codespace user: as root, read-only evidence could be overwritten.
+      - name: Hand the checkout to the vscode user
+        run: chown -R vscode "$GITHUB_WORKSPACE"
+      - name: Setup and checker tests
+        run: su vscode -c "bash tests/run-tests.sh"
+      - name: Lab book commands and quoted outputs
+        run: su vscode -c "bash tests/book-claims.sh"
+      - name: Interactive keys (history, nano, less)
+        run: su vscode -c "python3 -u tests/interactive-smoke.py"
