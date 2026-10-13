@@ -10,6 +10,7 @@
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
         "terminal.integrated.sendKeybindingsToShell": true,
+        "terminal.integrated.allowChords": false,
         "workbench.startupEditor": "none",
         "chat.disableAIFeatures": true,
         "github.copilot.enable": { "*": false },

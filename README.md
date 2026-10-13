@@ -58,7 +58,8 @@ What the Codespace configures:
 
 | Setting | Why |
 |---|---|
-| `terminal.integrated.sendKeybindingsToShell` | Ctrl+R, Ctrl+G, Ctrl+O, Ctrl+X and Ctrl+K reach the terminal instead of VS Code |
+| `terminal.integrated.sendKeybindingsToShell` | Ctrl+R, Ctrl+G, Ctrl+O and Ctrl+X reach the terminal instead of VS Code |
+| `terminal.integrated.allowChords: false` | Ctrl+K reaches nano instead of starting a VS Code two-key shortcut ("waiting for the second key of the chord") |
 | Copilot and inline AI suggestions disabled | Students type and reason through each command themselves |
 | `history -a` in `PROMPT_COMMAND`, `histappend` | Each command is saved immediately, so Ctrl+R finds it even in a new terminal |
 | `LC_COLLATE=C` | `sort` gives every learner the same order |
