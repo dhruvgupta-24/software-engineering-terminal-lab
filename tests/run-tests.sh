@@ -103,7 +103,68 @@ check "$tmp/attempts/attempt-02"
 grep -qF "python3 ../../lab/hint.py 2" <<< "$out" && ok "checker points to the hint for the first failing part" \
     || fail "checker points to the hint for the first failing part"
 
-# 8. Each common mistake is detected with a specific message.
+# 8. Progress display: counts match the results, a failed part is never shown
+#    as PASS, and piped output contains no colour codes.
+esc=$'\033'
+check "$tmp/attempts/attempt-02"
+if grep -qF "]  1/14" <<< "$out" && grep -qF "Summary   Evidence PASS  Exp 2 FAIL" <<< "$out" \
+   && ! grep -qF "$esc" <<< "$out"; then
+    ok "progress on a fresh attempt: 1/14, Exp 2 FAIL, no colour codes"
+else
+    fail "progress on a fresh attempt: 1/14, Exp 2 FAIL, no colour codes"
+fi
+check "$a1"
+summary="$(grep "^Summary" <<< "$out")"
+if grep -qF "]  14/14" <<< "$out" && ! grep -qF "FAIL" <<< "$summary" \
+   && [ "$(grep -o "PASS" <<< "$summary" | wc -l)" -eq 8 ]; then
+    ok "progress on a solved attempt: 14/14, all 8 parts PASS"
+else
+    fail "progress on a solved attempt: 14/14, all 8 parts PASS"
+fi
+p="$tmp/attempts/progress-test"
+cp -R "$a1" "$p"; chmod 555 "$p/evidence"
+(cd "$p" && cut -d "|" -f 2,3 evidence/alerts.log | uniq > work/alert-types.txt)
+check "$p"
+if [ "$status" -eq 1 ] && grep -qF "]  13/14" <<< "$out" \
+   && grep -qF "Exp 5 FAIL" <<< "$out" && grep -qF "Exp 4 PASS  Exp 5 FAIL  Exp 6 PASS" <<< "$out"; then
+    ok "progress with one broken part: 13/14 and only Exp 5 FAIL"
+else
+    fail "progress with one broken part: 13/14 and only Exp 5 FAIL"
+fi
+check "$a1" 3
+if grep -qF "]  3/3" <<< "$out" && grep -qF "Summary   Evidence PASS  Exp 3 PASS" <<< "$out"; then
+    ok "progress in single-part mode covers only that part"
+else
+    fail "progress in single-part mode covers only that part"
+fi
+chmod -R u+w "$p"; rm -rf "$p"
+
+# 9. Welcome message: only in an interactive shell at the repository root,
+#    pointing to the latest attempt, and it never changes a file.
+# welcome_in DIR [ENV=VALUE|""] REPO -> what a new terminal in DIR would print
+welcome_in() { (cd "$1" && env ${2:+"$2"} bash --norc -i -c ". '$3/lab/setup/welcome.sh'" 2>/dev/null); }
+fresh="$tmp/fresh-repo"; mkdir "$fresh"; cp -R "$tmp/lab" "$fresh/"
+before="$(tree_hash "$tmp/attempts")"
+w_fresh="$(welcome_in "$fresh" "" "$fresh")"
+w_root="$(welcome_in "$tmp" "" "$tmp")"
+w_inside="$(welcome_in "$a1" "" "$tmp")"
+w_off="$(welcome_in "$tmp" "COURSEDESK_NO_WELCOME=1" "$tmp")"
+w_batch="$(cd "$tmp" && bash -c ". '$tmp/lab/setup/welcome.sh'" 2>/dev/null)"
+grep -qF "bash lab/start.sh" <<< "$w_fresh" && ! grep -qF "Continue" <<< "$w_fresh" \
+    && ok "welcome with no attempt suggests bash lab/start.sh" \
+    || fail "welcome with no attempt suggests bash lab/start.sh"
+grep -qF "cd $tmp/attempts/attempt-02" <<< "$w_root" \
+    && ok "welcome with attempts points to the latest one" \
+    || fail "welcome with attempts points to the latest one"
+[ -z "$w_inside" ] && [ -z "$w_off" ] && [ -z "$w_batch" ] \
+    && ok "welcome is silent inside an attempt, when disabled, and in scripts" \
+    || fail "welcome is silent inside an attempt, when disabled, and in scripts"
+[ "$before" = "$(tree_hash "$tmp/attempts")" ] && [ ! -d "$fresh/attempts" ] \
+    && ok "welcome creates and changes nothing" \
+    || fail "welcome creates and changes nothing"
+rm -rf "$fresh"
+
+# 10. Each common mistake is detected with a specific message.
 #    mutate NAME PART EXPECTED_TEXT COMMANDS
 mutate() {
     local name="$1" part="$2" expected="$3" commands="$4"

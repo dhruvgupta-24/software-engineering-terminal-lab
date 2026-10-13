@@ -49,7 +49,7 @@ class Terminal:
         if self.pid == 0:
             os.chdir(cwd)
             os.execvpe("bash", ["bash", "-i"], env)
-        self.keys("", PROMPT)
+        self.startup = self.keys("", PROMPT)   # what a new terminal shows first
         self.run("stty cols 160 rows 30")
 
     def keys(self, keys, until=None, timeout=10):
@@ -66,9 +66,11 @@ class Terminal:
                 except OSError:
                     break
                 if until and until in clean(out):
+                    self.raw = out
                     return clean(out)
         if until:
             print(f"      (waited {timeout}s without seeing {until!r})", flush=True)
+        self.raw = out
         return clean(out)
 
     def run(self, command):
@@ -209,6 +211,29 @@ def main():
         out = t.keys("nano evidence/web-02-approved.conf\r", "is unwritable")
         result("nano: an evidence file opens as unwritable", "is unwritable" in out)
         t.keys(CTRL["x"], PROMPT)
+
+        # Checker progress display in a real terminal: coloured, unless NO_COLOR
+        t.run("python3 ../../lab/check.py 3")
+        green, red = "\x1b[32mPASS", "\x1b[31mFAIL"
+        result("checker progress: green PASS and red FAIL in a terminal",
+               green in t.raw and red in t.raw)
+        t.run("NO_COLOR=1 python3 ../../lab/check.py 3")
+        result("checker progress: NO_COLOR turns colour off",
+               "\x1b[32m" not in t.raw and "\x1b[31m" not in t.raw and "Summary" in t.raw)
+        t.close()
+
+        # Running setup again adds each ~/.bashrc block only once
+        subprocess.run(["bash", "lab/setup/postcreate.sh"], cwd=repo, env=env,
+                       check=True, capture_output=True)
+        bashrc = open(os.path.join(home, ".bashrc")).read()
+        result("setup run twice: settings and welcome added once each",
+               bashrc.count("# coursedesk-lab settings") == 1
+               and bashrc.count("# coursedesk-lab welcome") == 1)
+
+        # A new terminal at the repository root shows the welcome message
+        t = Terminal(repo, env)
+        result("new terminal at the repo root shows the welcome with the latest attempt",
+               "CourseDesk lab" in t.startup and f"cd {attempt}" in t.startup)
         t.close()
 
         # A new terminal can find the previous terminal's commands

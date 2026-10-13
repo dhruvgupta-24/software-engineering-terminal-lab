@@ -62,6 +62,7 @@ What the Codespace configures:
 | Copilot and inline AI suggestions disabled | Students type and reason through each command themselves |
 | `history -a` in `PROMPT_COMMAND`, `histappend` | Each command is saved immediately, so Ctrl+R finds it even in a new terminal |
 | `LC_COLLATE=C` | `sort` gives every learner the same order |
+| Welcome message (`lab/setup/welcome.sh`) | A new terminal at the repository root shows the next command: `bash lab/start.sh`, or the `cd` for the latest attempt. It only prints; it never creates or changes files. Turn it off with `export COURSEDESK_NO_WELCOME=1` in `~/.bashrc`, or delete the `# coursedesk-lab welcome` lines there. |
 
 ## Validation
 
@@ -73,7 +74,7 @@ python3 ../../lab/check.py 5        # one experiment: 2 to 7, or final
 python3 ../../lab/hint.py 5         # a hint for Experiment 5; add 2 for a stronger one
 ```
 
-The checker confirms the evidence is unchanged (SHA-256 in `lab/evidence.sha256`), checks the content, line order and structure of each required file in `work/`, and prints `PASS` or `FAIL` with a specific reason. It exits 0 only when every check passes and never creates, changes or deletes files. A fresh attempt scores `1 of 14` (the evidence check); a complete one `14 of 14`. Example:
+The checker confirms the evidence is unchanged (SHA-256 in `lab/evidence.sha256`), checks the content, line order and structure of each required file in `work/`, and prints `PASS` or `FAIL` with a specific reason. It exits 0 only when every check passes and never creates, changes or deletes files. A fresh attempt scores `1 of 14` (the evidence check); a complete one `14 of 14`. Below the score it shows a progress bar and one `PASS` or `FAIL` per experiment, in colour in a terminal (`NO_COLOR=1` turns colour off; piped output never has colour). Example:
 
 ```text
 FAIL  Exp 5     work/alert-types.txt still has repeated lines. uniq removes only adjacent repeats; sort first, then uniq.
@@ -86,9 +87,9 @@ The checker cannot observe interactive use of `history`, `nano` or `less`; the l
 ## Tests
 
 ```bash
-bash tests/run-tests.sh                 # 37 tests: setup, attempts, checker, hints, 23 common mistakes
+bash tests/run-tests.sh                 # 45 tests: setup, attempts, checker, hints, progress, welcome, 23 mistakes
 bash tests/book-claims.sh               # 43 tests: the book's commands and every output it quotes
-python3 tests/interactive-smoke.py      # 15 tests: the book's keys in bash, nano and less (Linux)
+python3 tests/interactive-smoke.py      # 19 tests: the book's keys in bash, nano and less, colour, welcome (Linux)
 ```
 
 All three run on a temporary copy and never touch real attempts. Rebuild the PDF after editing the book with `pip install markdown && python3 book/build_pdf.py` (needs Chrome, Chromium or Edge; set `CHROME=/path` if it is not found).

@@ -42,9 +42,17 @@ PROMPT_COMMAND="history -a${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 EOF
 fi
 
+# A short welcome in each new terminal, pointing to the next command. It only
+# prints (see lab/setup/welcome.sh); COURSEDESK_NO_WELCOME=1 turns it off.
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+welcome_marker="# coursedesk-lab welcome"
+if ! grep -qF "$welcome_marker" "$HOME/.bashrc" 2>/dev/null; then
+    printf '\n%s\n[ -f "%s" ] && . "%s"\n' "$welcome_marker" \
+        "$repo_root/lab/setup/welcome.sh" "$repo_root/lab/setup/welcome.sh" >> "$HOME/.bashrc"
+fi
+
 # Check that the tools behave as the lab book expects, on a temporary copy:
 # attempts, read-only evidence, the checker and the reference results.
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 log="$(mktemp)"
 if bash "$repo_root/tests/run-tests.sh" > "$log" 2>&1; then
     echo "Lab self-test: $(tail -n 1 "$log")."

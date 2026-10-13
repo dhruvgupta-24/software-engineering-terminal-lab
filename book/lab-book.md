@@ -401,7 +401,7 @@ python3 ../../lab/check.py          # every check
 python3 ../../lab/check.py 5        # one experiment: 2 to 7, or final
 ```
 
-The checker confirms that every file in `evidence/` still matches the original and checks the content, line order and structure of each required file in `work/`. Each check prints `PASS` or `FAIL` with a reason; the last line gives the score. It **never changes your files**, so run it as often as you like. If the evidence check fails, start a new attempt (see Set up) and redo the work there.
+The checker confirms that every file in `evidence/` still matches the original and checks the content, line order and structure of each required file in `work/`. Each check prints `PASS` or `FAIL` with a reason, followed by the score, a progress bar and a `PASS` or `FAIL` for each experiment. It **never changes your files**, so run it as often as you like. If the evidence check fails, start a new attempt (see Set up) and redo the work there.
 
 **See a failing check, then fix it (do this once).** Make a deliberate mistake and check it:
 

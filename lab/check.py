@@ -12,6 +12,7 @@ It cannot see how you used history, nano or less; show those skills to your
 instructor.
 """
 import hashlib
+import os
 import re
 import sys
 from collections import Counter
@@ -454,6 +455,40 @@ class Checker:
 
 # ---------------------------------------------------------------- main
 
+def use_colour(stream=sys.stdout):
+    """Colour only in a real terminal, and never when NO_COLOR is set."""
+    return (stream.isatty() and "NO_COLOR" not in os.environ
+            and os.environ.get("TERM") != "dumb")
+
+
+def progress_lines(results, colour):
+    """Two summary lines: a progress bar and one PASS/FAIL per part checked.
+
+    A part is PASS only if every one of its checks passed.
+    """
+    passed = sum(1 for _, ok, _ in results if ok)
+    total = len(results)
+    unicode_ok = (sys.stdout.encoding or "").lower().replace("-", "") == "utf8"
+    full, empty = ("█", "░") if unicode_ok else ("#", "-")
+    green, red, reset = ("\033[32m", "\033[31m", "\033[0m") if colour else ("", "", "")
+
+    bar = full * passed + empty * (total - passed)
+    bar_colour = green if passed == total else red
+    lines = [f"Progress  [{bar_colour}{bar}{reset}]  {passed}/{total}"]
+
+    status = {}
+    for part, ok, _ in results:
+        status[part] = status.get(part, True) and ok
+    words = []
+    for part, ok in status.items():
+        label = "Evidence" if part == "evidence" else (
+            "Final" if part == "final" else f"Exp {part}")
+        word = f"{green}PASS{reset}" if ok else f"{red}FAIL{reset}"
+        words.append(f"{label} {word}")
+    lines.append("Summary   " + "  ".join(words))
+    return lines
+
+
 def find_attempt():
     for folder in [Path.cwd(), *Path.cwd().parents]:
         if (folder / ".attempt").is_file():
@@ -490,6 +525,8 @@ def main(argv):
     total = len(checker.results)
     print()
     print(f"{passed} of {total} checks passed.")
+    for line in progress_lines(checker.results, use_colour()):
+        print(line)
     if passed < total:
         print("Fix one FAIL at a time, then run the checker again.")
         first = next((part for part, ok, _ in checker.results
